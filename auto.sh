@@ -1,9 +1,9 @@
 #!/bin/bash
 ca_crt=ca.crt
 ca_key=ca.key
-ca_cn="test.com"
+ca_cn="github.com"
 ca_info="/C=US/CN=${ca_cn}"
-server_cn="test.com"
+server_cn="github.com"
 server_info="/CN=${server_cn}"
 #Country Name (2 letter code) [XX]:     
 #State or Province Name (full name) []:       
@@ -18,9 +18,7 @@ is_match(){
     local d=`diff -eq <(openssl x509 -pubkey -noout -in $1) <(openssl rsa -pubout -in $2)`
     if [[ $d == "" ]]
     then
-        return true
-    else
-        return false
+        return 1
     fi
 }
 
@@ -65,9 +63,9 @@ if [[ ${findca} != "" && ${findkey} != "" ]]
 then
     echo "ca file found"
     is_match ca.crt ca.key
-    if $?
+    if [[ $? == 1 ]]
     then
-        echo "check pass"
+        echo "ca file checked"
     else
         gen_ca
     fi
