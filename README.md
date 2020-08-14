@@ -5,5 +5,5 @@ Auto generate CA file, then auth other certs
 auto.sh -h # or --help
 ```
 ```
-auto.sh --ecc --subj="C=US/ST=California/L=San Francisco/O=github/CN=github.com"
+auto.sh --ecc --subj="/C=US/ST=California/L=SanFrancisco/O=github/CN=github.com"
 ```
