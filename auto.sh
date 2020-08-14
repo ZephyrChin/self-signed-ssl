@@ -18,10 +18,12 @@ server_subj="/CN=github.com"
 is_clear=false
 mk_rnd=false
 mk_ca_dir=false
+auth_server=false
 
 show_usage(){
     echo "usage:"
     echo "  -h    : show usage"
+    echo "  -s    : generate server cert and key"
     echo "  -ca   : provide CA file"
     echo "  -key  : provide CA key"
     echo "  -ecc  : use ecc as encryption method"
@@ -30,7 +32,7 @@ show_usage(){
 }
 
 get_args(){
-    ARGS=`getopt -o h -l ecc,help,clear,ca:,key:,subj: -- "$@"`
+    ARGS=`getopt -o hs -l ecc,help,clear,ca:,key:,subj: -- "$@"`
     eval set -- "${ARGS}"
     while true
     do
@@ -38,6 +40,10 @@ get_args(){
             -h|--help)
                 show_usage;
                 exit 0
+                ;;
+            -s)
+                auth_server=true;
+                shift
                 ;;
             --ecc)
                 is_ecc=true;
@@ -75,7 +81,7 @@ get_args(){
 
 #check CA file
 is_match(){
-    local d=`diff -eq <(openssl x509 -pubkey -noout -in $1) <(openssl rsa -pubout -in $2)`
+    local d=`diff -eq <(openssl x509 -pubkey -noout -in $1) <(openssl pkey -pubout -in $2)`
     if [[ $d == "" ]]
     then
         return 1
@@ -196,7 +202,11 @@ else
     gen_ca
 fi
 
-gen_server_crt
+if ${auth_server}
+then
+    gen_server_crt
+fi
+
 if ${is_clear}
 then
     do_clear
