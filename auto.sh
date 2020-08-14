@@ -151,7 +151,7 @@ gen_server_crt(){
     openssl req -new -key server.key -out server.csr -subj ${server_subj}
 
     echo "submit CSR to SSL provider.."
-    openssl ca -in server.csr -out server.crt \
+    openssl ca -days 3650 -in server.csr -out server.crt \
     -cert ${ca_crt} -keyfile ${ca_key} -policy policy_anything
 
     #echo "check and verify certificate.."
