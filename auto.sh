@@ -21,6 +21,7 @@ mk_ca_dir=false
 
 show_usage(){
     echo "usage:"
+    echo "  -h    : show usage"
     echo "  -ca   : provide CA file"
     echo "  -key  : provide CA key"
     echo "  -ecc  : use ecc as encryption method"
@@ -29,34 +30,38 @@ show_usage(){
 }
 
 get_args(){
-    ARGS=`getopt -l ecc,clear,ca:,key:,subj: -- "$@"`
+    ARGS=`getopt -o h -l ecc,help,clear,ca:,key:,subj: -- "$@"`
     eval set -- "${ARGS}"
     while true
     do
         case $1 in
-            -ecc)
+            -h|--help)
+                show_usage;
+                exit 0
+                ;;
+            --ecc)
                 is_ecc=true;
                 shift
                 ;;
-            -clear)
+            --clear)
                 is_clear=true;
                 shift
                 ;;
-            -ca)
+            --ca)
                 ca_crt=$2;
                 shift 2
                 ;;
-            -key)
+            --key)
                 ca_key=$2;
-                shift2
+                shift 2
                 ;;
-            -subj)
+            --subj)
                 ca_subj=$2;
                 server_subj=$2;
-                shift2;
+                shift 2
                 ;;
             --)
-                shift2;
+                shift
                 break;
             ;;
         esac
@@ -64,6 +69,7 @@ get_args(){
     if [[ $@ != "" ]]
     then
         show_usage
+        exit 1
     fi
 }
 
@@ -87,7 +93,7 @@ check_rnd(){
     fi
 }
 
-#to use command [openssl ca], these files(dirs) are necessary
+#to use command [openssl ca], these files are needed
 #demoCA
 #├── index.txt
 #├── index.txt.attr
@@ -129,7 +135,7 @@ gen_ca(){
 
 #generate another cert then auth with CA file
 gen_server_crt(){
-    echo "create needed dirs for command [openssl ca].."
+    echo "create dir for command [openssl ca].."
     check_ca_dir
 
     if $is_ecc
@@ -172,6 +178,7 @@ do_clear(){
 }
 
 ####main
+get_args $@
 check_rnd
 findca=`ls ${ca_crt} 2>/dev/null`
 findkey=`ls ${ca_key} 2>/dev/null`
