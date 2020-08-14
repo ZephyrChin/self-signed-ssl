@@ -1,12 +1,10 @@
 #!/bin/bash
-ca_crt=ca.crt
-ca_key=ca.key
+ca_crt="ca.crt"
+ca_key="ca.key"
+is_ecc=false
 ca_subj="/CN=github.com"
 server_subj="/CN=github.com"
-is_ecc=false
-#clear()
-mk_rnd=false
-mk_ca_dir=false
+
 #Country Name (2 letter code) [XX]:     
 #State or Province Name (full name) []:       
 #Locality Name (eg, city) [Default City]:     
@@ -16,7 +14,60 @@ mk_ca_dir=false
 #Email Address []: 
 #An optional company name []:
 
+#about do_clear()
+is_clear=false
+mk_rnd=false
+mk_ca_dir=false
+
+
+show_usage(){
+    echo "usage:"
+    echo "  -ca   : provide CA file"
+    echo "  -key  : provide CA key"
+    echo "  -ecc  : use ecc as encryption method"
+    echo "  -sub j: information used to generate CSR"
+    echo "  -clear: remove files created by the script, including *.csr RANDFILE CAdemo"
+}
 #check ca and key
+get_args(){
+    ARGS=`getopt -l ecc,clear,ca:,key:,subj: -- "$@"`
+    eval set -- "${ARGS}"
+    while true
+    do
+        case $1 in
+            -ecc)
+                is_ecc=true;
+                shift
+                ;;
+            -clear)
+                is_clear=true;
+                shift
+                ;;
+            -ca)
+                ca_crt=$2;
+                shift 2
+                ;;
+            -key)
+                ca_key=$2;
+                shift2
+                ;;
+            -subj)
+                ca_subj=$2;
+                server_subj=$2;
+                shift2;
+                ;;
+            --)
+                shift2;
+                break;
+            ;;
+        esac
+    done
+    if [[ $@ != "" ]]
+    then
+        show_usage
+    fi
+}
+
 is_match(){
     local d=`diff -eq <(openssl x509 -pubkey -noout -in $1) <(openssl rsa -pubout -in $2)`
     if [[ $d == "" ]]
@@ -58,19 +109,19 @@ gen_ca(){
     if $is_ecc
     then
         echo "generate private key [ecc].."
-        openssl ecparam -genkey -name prime256v1 -out ca.key #ecc
+        openssl ecparam -genkey -name prime256v1 -out ${ca_key} #ecc
     else
         echo "generate private key.."
-        openssl genrsa -out ca.key 2048
+        openssl genrsa -out ${ca_key} 2048
     fi
 
     echo "generate CSR.."
-    openssl req -new -key ca.key -out ca.csr -subj ${ca_subj}
+    openssl req -new -key ${ca_key} -out ca.csr -subj ${ca_subj}
 
     echo "create self-signed certificate.."
-    openssl req -x509 -days 3650 -key ca.key -in ca.csr -out ca.crt
+    openssl req -x509 -days 3650 -key ${ca_key} -in ca.csr -out ${ca_crt}
     #echo "check certificate.."
-    #openssl x509 -in ca.crt -text -noout
+    #openssl x509 -in ${ca_crt} -text -noout
 }
 
 gen_server_crt(){
@@ -91,13 +142,14 @@ gen_server_crt(){
 
     echo "submit CSR to SSL provider.."
     openssl ca -in server.csr -out server.crt \
-    -cert ca.crt -keyfile ca.key -policy policy_anything
+    -cert ${ca_crt} -keyfile ${ca_key} -policy policy_anything
 
     #echo "check and verify certificate.."
     #openssl x509 -in server.crt -text -noout
-    openssl verify -CAfile ca.crt server.crt
+    openssl verify -CAfile ${ca_crt} server.crt
 }
-clear(){
+
+do_clear(){
     if $mk_rnd
     then
         echo "rm RNDFILE.."
@@ -115,8 +167,8 @@ clear(){
 }
 ####main
 check_rnd
-findca=$(ls|grep ca.crt)
-findkey=$(ls|grep ca.key)
+findca=`ls ${ca_crt} 2>/dev/null`
+findkey=`ls ${ca_key} 2>/dev/null`
 if [[ ${findca} != "" && ${findkey} != "" ]]
 then
     echo "ca file found"
@@ -132,4 +184,7 @@ else
 fi
 
 gen_server_crt
-clear
+if ${is_clear}
+then
+    do_clear
+fi
