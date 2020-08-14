@@ -14,21 +14,20 @@ server_subj="/CN=github.com"
 #Email Address []: 
 #An optional company name []:
 
-#about do_clear()
+#flags of do_clear()
 is_clear=false
 mk_rnd=false
 mk_ca_dir=false
-
 
 show_usage(){
     echo "usage:"
     echo "  -ca   : provide CA file"
     echo "  -key  : provide CA key"
     echo "  -ecc  : use ecc as encryption method"
-    echo "  -sub j: information used to generate CSR"
+    echo "  -subj: information used to generate CSR"
     echo "  -clear: remove files created by the script, including *.csr RANDFILE CAdemo"
 }
-#check ca and key
+
 get_args(){
     ARGS=`getopt -l ecc,clear,ca:,key:,subj: -- "$@"`
     eval set -- "${ARGS}"
@@ -68,6 +67,7 @@ get_args(){
     fi
 }
 
+#check CA file
 is_match(){
     local d=`diff -eq <(openssl x509 -pubkey -noout -in $1) <(openssl rsa -pubout -in $2)`
     if [[ $d == "" ]]
@@ -76,6 +76,7 @@ is_match(){
     fi
 }
 
+#[openssl req] requires ~/.rnd by default config
 check_rnd(){
     local rndfile=`ls -a ~|grep .rnd`
     if [[ ${rndfile} == "" ]]
@@ -86,6 +87,7 @@ check_rnd(){
     fi
 }
 
+#to use command [openssl ca], these files(dirs) are necessary
 #demoCA
 #├── index.txt
 #├── index.txt.attr
@@ -105,6 +107,7 @@ check_ca_dir(){
     fi
 }
 
+#generate CA file if not provided
 gen_ca(){
     if $is_ecc
     then
@@ -124,6 +127,7 @@ gen_ca(){
     #openssl x509 -in ${ca_crt} -text -noout
 }
 
+#generate another cert then auth with CA file
 gen_server_crt(){
     echo "create needed dirs for command [openssl ca].."
     check_ca_dir
@@ -149,6 +153,7 @@ gen_server_crt(){
     openssl verify -CAfile ${ca_crt} server.crt
 }
 
+#remain RNDFILE and CAdemo if they exist before
 do_clear(){
     if $mk_rnd
     then
@@ -165,6 +170,7 @@ do_clear(){
         rm -rf demoCA
     fi
 }
+
 ####main
 check_rnd
 findca=`ls ${ca_crt} 2>/dev/null`
