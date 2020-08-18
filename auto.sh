@@ -24,11 +24,11 @@ show_usage(){
     echo "usage:"
     echo "  -h    : show usage"
     echo "  -s    : generate server cert and key"
-    echo "  -ca   : provide CA file"
-    echo "  -key  : provide CA key"
-    echo "  -ecc  : use ecc as encryption method"
-    echo "  -subj: information used to generate CSR"
-    echo "  -clear: remove files created by the script, including *.csr RANDFILE CAdemo"
+    echo "  --ca   : provide CA file"
+    echo "  --key  : provide CA key"
+    echo "  --ecc  : use ecc as encryption method"
+    echo "  --subj: information used to generate CSR"
+    echo "  --clear: remove files created by the script, including *.csr RANDFILE CAdemo"
 }
 
 get_args(){
